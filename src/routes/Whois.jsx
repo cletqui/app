@@ -2,35 +2,35 @@ import { Outlet, useParams, useLoaderData } from "react-router-dom";
 
 import { SearchBar } from "../components/SearchBar";
 
-const getData = async (ip) => {
-  const response = await fetch(`http://ip-api.com/json/${ip}`);
+const getData = async (name) => {
+  const response = await fetch(`https://rdap.org/domain/${name}`);
   return await response.json();
 };
 
 export const loader = async ({ params }) => {
-  const { ip } = params;
-  const data = await getData(ip);
+  const { name } = params;
+  const data = await getData(name);
   return { data };
 };
 
 export const Input = () => {
-  const title = "IP Info";
+  const title = "Whois";
   document.title = title;
   return (
     <>
       <h1>{title}</h1>
-      <SearchBar label={"IP"} />
+      <SearchBar label={"Domain Name"} />
       <Outlet />
     </>
   );
 };
 
 export const Output = () => {
-  const { ip } = useParams();
+  const { name } = useParams();
   const { data } = useLoaderData();
   return (
     <>
-      <h1>{ip}</h1>
+      <h1>{name}</h1>
       {JSON.stringify(data)}
     </>
   );

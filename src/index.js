@@ -9,13 +9,18 @@ import { Error } from "./routes/Error";
 import {
   Input as NSLookupInput,
   Output as NSLookupOutput,
+  loader as NSLookupLoader,
 } from "./routes/Nslookup";
 import {
   Input as IPInfoInput,
   Output as IPInfoOutput,
   loader as IPInfoLoader,
 } from "./routes/IPInfo";
-import { WhoIs } from "./routes/WhoIs";
+import {
+  Input as WhoisInput,
+  Output as WhoisOutput,
+  loader as WhoisLoader,
+} from "./routes/Whois";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +39,7 @@ const router = createBrowserRouter([
           {
             path: "/nslookup/:name",
             element: <NSLookupOutput />,
+            loader: NSLookupLoader,
           },
         ],
       },
@@ -50,11 +56,12 @@ const router = createBrowserRouter([
       },
       {
         path: "/whois",
-        element: <WhoIs />,
+        element: <WhoisInput />,
         children: [
           {
             path: "/whois/:name",
-            element: <WhoIs />,
+            element: <WhoisOutput />,
+            loader: WhoisLoader,
           },
         ],
       },

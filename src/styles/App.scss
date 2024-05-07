@@ -7,16 +7,66 @@
     text-align: center;
   }
 
-  input {
-    height: 1.5em;
-    width: 22vw;
-    margin: 0 .5em 0 .5em;
-    box-shadow: 0 0 0 1px;
-    border: 1px solid transparent;
-    border-radius: 5px;
-    font-family: inherit;
+  h3 {
+    font-weight: inherit;
   }
 
+  .search {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    input {
+      height: 1.5em;
+      width: 22vw;
+      margin: 0 .5em 0 .5em;
+      box-shadow: 0 0 0 1px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      font-family: inherit;
+    }
+  }
+
+  /* */
+  select {
+    font-family: inherit;
+    font-weight: inherit;
+  }
+
+  /* TABLE */
+  table {
+    margin: .5em 0 1em 0;
+    table-layout: auto;
+    border-spacing: 0;
+    border-collapse: inherit;
+    border-radius: 10px;
+    border: 1px solid;
+  }
+
+  table thead th {
+    border-bottom: 1px solid;
+  }
+
+  table tbody td:not(:last-child) {
+    border-right: 1px solid;
+  }
+
+  table tbody tr:not(:last-child)>td {
+    border-bottom: 1px solid;
+  }
+
+  table thead th:not(:last-child),
+  table tbody td:not(:last-child) {
+    border-right: 1px solid;
+  }
+
+  th,
+  td {
+    padding: 0 .5em 0 .5em;
+    // TODO implement ellipses and click on td to expand the content
+  }
+
+  /* FOOTER */
   footer {
     display: flex;
     justify-content: center;
@@ -41,10 +91,13 @@
     }
   }
 
+  /* LABEL */
   label {
     display: none;
   }
 
+  /* ERROR */
+  // TODO fix error page layout
   #error {
     display: flex;
     flex-direction: column;
