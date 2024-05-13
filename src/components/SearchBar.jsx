@@ -1,12 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
+import { validate } from "../utils/validate";
 
 export const SearchBar = ({ label }) => {
   const navigate = useNavigate();
 
   const onClick = async () => {
-    const { value } = document.getElementById("search");
-    navigate(value);
+    const { value: input } = document.getElementById("search");
+    const { type, value } = validate(input);
+    if (type) {
+      navigate(value); // TODO sanitize input before navigate
+    }
   };
 
   const onKeyDown = (event) => {
@@ -14,6 +18,7 @@ export const SearchBar = ({ label }) => {
       onClick();
     }
   };
+
   return (
     <div className="search">
       <label htmlFor="search">{label}</label>

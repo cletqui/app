@@ -1,5 +1,5 @@
-export const Table = ({ list }) => (
-  <>
+export const Table = ({ list }) => {
+  return (
     <table>
       <thead>
         <tr>
@@ -19,5 +19,5 @@ export const Table = ({ list }) => (
         ))}
       </tbody>
     </table>
-  </>
-);
+  );
+};

@@ -1,10 +1,10 @@
 import { Outlet, useParams, useLoaderData } from "react-router-dom";
 
 import { SearchBar } from "../components/SearchBar";
-import { Code } from "../components/Code";
 
 const getData = async (domain) => {
-  const response = await fetch(`https://rdap.org/domain/${domain}`);
+  const response = await fetch(`https://crt.cybai.re/?q=${domain}`);
+  console.log(response.ok, response.status, response.statusText);
   return await response.json();
 };
 
@@ -15,7 +15,7 @@ export const loader = async ({ params }) => {
 };
 
 export const Input = () => {
-  const title = "Whois";
+  const title = "Certificate Transparency";
   document.title = title;
   return (
     <>
@@ -27,13 +27,12 @@ export const Input = () => {
 };
 
 export const Output = () => {
-  const { name } = useParams();
+  const { domain } = useParams();
   const { data } = useLoaderData();
   return (
     <>
-      <h1>{name}</h1>
+      <h1>{domain}</h1>
       {JSON.stringify(data)}
-      <Code data={data} />
     </>
   );
 };

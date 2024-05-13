@@ -1,6 +1,7 @@
 import { Outlet, useParams, useLoaderData } from "react-router-dom";
 
 import { SearchBar } from "../components/SearchBar";
+import { Code } from "../components/Code";
 
 const getData = async (ip) => {
   const response = await fetch(`http://ip-api.com/json/${ip}`);
@@ -31,7 +32,7 @@ export const Output = () => {
   return (
     <>
       <h1>{ip}</h1>
-      {JSON.stringify(data)}
+      <Code data={data} />
     </>
   );
 };

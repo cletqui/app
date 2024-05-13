@@ -26,14 +26,23 @@ const meanings = {
   SOA: "Zone of Authority",
 };
 
+/**
+ * Formats total seconds into a human-readable time format.
+ * @param {number} seconds - Total seconds to be formatted.
+ * @returns {string} The formatted time string (e.g., "1h 30m 15s").
+ */
 function formatSeconds(seconds) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
 
-  return `${hours ? `${hours}h ` : ""}${minutes ? `${minutes}m ` : ""}${
-    remainingSeconds ? `${remainingSeconds}s` : ""
-  }`.trim();
+  const parts = [
+    hours ? `${hours}h` : "",
+    minutes ? `${minutes}m` : "",
+    remainingSeconds ? `${remainingSeconds}s` : "",
+  ].filter(Boolean);
+
+  return parts.join(" ");
 }
 
 export const Record = ({ record }) => {
@@ -57,7 +66,7 @@ export const Record = ({ record }) => {
   return (
     <div>
       <h2>{`${typeName} records`}</h2>
-      {data ? <Table list={data} /> : `No ${typeName} record found.`}
+      {data ? <Table list={data} /> : `No ${typeName} records found.`}
     </div>
   );
 };

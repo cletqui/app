@@ -31,15 +31,15 @@ const dnsQuery = async (name, resolver, type) => {
   return await response.json();
 };
 
-const getData = async (name, resolver) => {
-  return Promise.all(types.map((type) => dnsQuery(name, resolver, type)));
+const getData = async (domain, resolver) => {
+  return Promise.all(types.map((type) => dnsQuery(domain, resolver, type)));
 };
 
 export const loader = async ({ params, request }) => {
-  const { name } = params;
-  const searchParams = new URL(request.url).searchParams;
+  const { domain } = params;
+  const { searchParams } = new URL(request.url);
   const resolver = searchParams.get("resolver") || "cloudflare"; // Default resolver Cloudflare
-  const data = await getData(name, resolver);
+  const data = await getData(domain, resolver);
 
   return { data };
 };
@@ -58,7 +58,7 @@ export const Input = () => {
 };
 
 export const Output = () => {
-  const { name } = useParams();
+  const { domain } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const resolver = searchParams.get("resolver") || "cloudflare"; // Default resolver Cloudflare
   const { data } = useLoaderData();
@@ -90,7 +90,7 @@ export const Output = () => {
     return (
       <h3>
         {'"'}
-        <b>{`${name}`}</b>
+        <b>{`${domain}`}</b>
         {`" records resolved with `}
         <b>
           <Dropdown />

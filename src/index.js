@@ -21,6 +21,11 @@ import {
   Output as WhoisOutput,
   loader as WhoisLoader,
 } from "./routes/Whois";
+import {
+  Input as CertsInput,
+  Output as CertsOutput,
+  loader as CertsLoader,
+} from "./routes/Certs";
 
 const router = createBrowserRouter([
   {
@@ -37,7 +42,7 @@ const router = createBrowserRouter([
         element: <NSLookupInput />,
         children: [
           {
-            path: "/nslookup/:name",
+            path: "/nslookup/:domain",
             element: <NSLookupOutput />,
             loader: NSLookupLoader,
           },
@@ -59,9 +64,20 @@ const router = createBrowserRouter([
         element: <WhoisInput />,
         children: [
           {
-            path: "/whois/:name",
+            path: "/whois/:domain",
             element: <WhoisOutput />,
             loader: WhoisLoader,
+          },
+        ],
+      },
+      {
+        path: "/certs",
+        element: <CertsInput />,
+        children: [
+          {
+            path: "/certs/:domain",
+            element: <CertsOutput />,
+            loader: CertsLoader,
           },
         ],
       },
