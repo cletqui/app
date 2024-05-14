@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { MdDns, MdQuestionMark, MdInfo, MdMail } from "react-icons/md";
+import { TbCertificate } from "react-icons/tb";
 
 import { validate } from "../utils/validate";
 
@@ -43,6 +44,10 @@ export const Home = () => {
 
         <Link to={"whois"} title="WhoIs">
           <MdQuestionMark />
+        </Link>
+
+        <Link to={"certs"} title="Certs">
+          <TbCertificate />
         </Link>
       </div>
 

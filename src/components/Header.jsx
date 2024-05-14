@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
 import { MdDns, MdQuestionMark, MdInfo, MdMenu } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
+import { TbCertificate } from "react-icons/tb";
 
 export const Header = () => {
   const [menu, setMenu] = useState(false);
@@ -15,7 +16,7 @@ export const Header = () => {
   return (
     <div className="header">
       {location.pathname !== "/" && (
-        <Link to="/">
+        <Link id="home" to="/">
           <FaHome />
         </Link>
       )}
@@ -33,6 +34,8 @@ export const Header = () => {
           <Link to={"whois"}>
             <MdQuestionMark />
           </Link>
+
+          <Link to={"certs"}><TbCertificate/></Link>
         </>
       )}
 
