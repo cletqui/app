@@ -8,6 +8,8 @@ import {
 import { SearchBar } from "../components/SearchBar";
 import { Record } from "../components/Record";
 
+// TODO test every resolver if it returns errors
+
 const resolvers = {
   cloudflare: "cloudflare-dns.com/dns-query",
   google: "dns.google/resolve",

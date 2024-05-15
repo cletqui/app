@@ -1,13 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MdDns, MdQuestionMark, MdInfo, MdMail } from "react-icons/md";
 import { TbCertificate } from "react-icons/tb";
 
 import { validate } from "../utils/validate";
 
 const SearchBar = () => {
+  const navigate = useNavigate();
+
+  const onClick = async () => {
+    const { value: input } = document.getElementById("search");
+    const { type, value } = validate(input);
+    if (type) {
+      navigate(`${type}/${value}`);
+    }
+  };
+
   const onKeyUp = (event) => {
-    const input = event.target.value;
-    console.log(input, validate(input));
+    if (event.key === "Enter") {
+      onClick();
+    }
   };
 
   return (

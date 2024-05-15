@@ -6,6 +6,8 @@ import "./styles/index.css";
 import { App } from "./App";
 import { Home } from "./routes/Home";
 import { Error } from "./routes/Error";
+import { Domain } from "./routes/Domain";
+import { IP } from "./routes/IP";
 import {
   Input as NSLookupInput,
   Output as NSLookupOutput,
@@ -36,6 +38,21 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <Home />,
+      },
+      {
+        path: "/domain/:domain",
+        element: <Domain />,
+        children: [
+          {
+            path: "/domain/:domain",
+            element: <NSLookupOutput />,
+            loader: NSLookupLoader,
+          },
+        ],
+      },
+      {
+        path: "/ip/:ip",
+        element: <IP />,
       },
       {
         path: "/nslookup",
