@@ -44,10 +44,10 @@ function WhoisCard({ state }: { state: ReturnType<typeof useAsync<WhoisResult>> 
           {created && <Row label="Created" value={new Date(created).toLocaleDateString()} />}
           {expires && <Row label="Expires" value={new Date(expires).toLocaleDateString()} />}
           {updated && <Row label="Updated" value={new Date(updated).toLocaleDateString()} />}
-          {d.nameservers?.length > 0 && (
+          {(d.nameservers?.length ?? 0) > 0 && (
             <div className="mt-1.5">
               <p className="mb-0.5 text-[10px] text-muted-foreground">Nameservers</p>
-              {d.nameservers.slice(0, 4).map((ns) => (
+              {d.nameservers?.slice(0, 4).map((ns) => (
                 <div key={ns.ldhName} className="text-xs">{ns.ldhName.toLowerCase()}</div>
               ))}
             </div>
