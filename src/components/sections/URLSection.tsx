@@ -1,87 +1,64 @@
-import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { SectionCard } from "@/components/SectionCard";
-import { Separator } from "@/components/ui/separator";
+import { useAsync } from "@/hooks/useAsync";
+import { SectionCard, StatusRow, Tags } from "@/components/SectionCard";
 import { urlThreat } from "@/lib/api";
 import type { UrlhausUrlResult } from "@/lib/api";
 import { DomainSection } from "./DomainSection";
 
 function extractHostname(url: string): string | null {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return null;
-  }
+  try { return new URL(url).hostname; } catch { return null; }
 }
 
 export function URLSection({ url }: { url: string }) {
-  const [state, setState] = useState<{ loading: boolean; data: UrlhausUrlResult | null; error: string | null }>({
-    loading: true, data: null, error: null,
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    setState({ loading: true, data: null, error: null });
-    urlThreat(url)
-      .then((data) => { if (!cancelled) setState({ loading: false, data, error: null }); })
-      .catch((e: Error) => { if (!cancelled) setState({ loading: false, data: null, error: e.message }); });
-    return () => { cancelled = true; };
-  }, [url]);
-
+  const state = useAsync(() => urlThreat(url), [url]);
   const d = state.data;
   const found = d?.query_status === "ok";
   const hostname = extractHostname(url);
 
   return (
-    <div className="space-y-4">
-      <SectionCard title="URL Threat" source="URLhaus" loading={state.loading} error={state.error} skeletonRows={3}>
-        {d && (
-          found ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="destructive">Malicious</Badge>
-                {d.url_status && <Badge variant={d.url_status === "online" ? "destructive" : "muted"}>{d.url_status}</Badge>}
-                {d.urlhaus_reference && (
-                  <a href={d.urlhaus_reference} target="_blank" rel="noopener noreferrer" className="ml-auto text-muted-foreground hover:text-foreground">
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-              {d.threat && <p className="text-sm text-muted-foreground">{d.threat}</p>}
-              {d.date_added && <p className="text-xs text-muted-foreground">Added: {d.date_added}</p>}
-              {d.tags?.length ? (
-                <div className="flex flex-wrap gap-1">
-                  {d.tags.map((t) => <Badge key={t} variant="muted">{t}</Badge>)}
-                </div>
-              ) : null}
-              {d.blacklists && (
-                <div className="space-y-0.5 text-xs">
-                  <div className="text-muted-foreground">GSB: {d.blacklists.gsb}</div>
-                  <div className="text-muted-foreground">SURBL: {d.blacklists.surbl}</div>
-                  <div className="text-muted-foreground">Spamhaus DBL: {d.blacklists.spamhaus_dbl}</div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <Badge variant="success">Clean</Badge>
-              <span className="text-sm text-muted-foreground">No URLhaus records for this URL</span>
-            </div>
-          )
-        )}
-      </SectionCard>
-
+    <div className="space-y-3">
+      <UrlThreatCard state={state} />
       {hostname && (
-        <>
-          <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground font-mono">{hostname}</span>
-            <Separator className="flex-1" />
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Host</span>
+            <span className="text-xs">{hostname}</span>
           </div>
           <DomainSection domain={hostname} />
-        </>
+        </div>
       )}
     </div>
+  );
+}
+
+function UrlThreatCard({ state }: { state: ReturnType<typeof useAsync<UrlhausUrlResult>> }) {
+  const d = state.data;
+  const found = d?.query_status === "ok";
+  return (
+    <SectionCard title="URL Threat" source="URLhaus" loading={state.loading} error={state.error} skeletonRows={3}>
+      {d && (
+        found
+          ? <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-destructive text-xs">● Malicious</span>
+                {d.url_status && (
+                  <span className={`text-xs ${d.url_status === "online" ? "text-destructive" : "text-muted-foreground"}`}>
+                    {d.url_status}
+                  </span>
+                )}
+              </div>
+              {d.threat && <p className="text-xs text-muted-foreground">{d.threat}</p>}
+              {d.date_added && <p className="text-xs text-muted-foreground">Added: {d.date_added}</p>}
+              {d.blacklists && (
+                <div className="space-y-0.5 text-xs">
+                  <div className="flex gap-2"><span className="w-24 text-muted-foreground">GSB</span>{d.blacklists.gsb}</div>
+                  <div className="flex gap-2"><span className="w-24 text-muted-foreground">SURBL</span>{d.blacklists.surbl}</div>
+                  <div className="flex gap-2"><span className="w-24 text-muted-foreground">Spamhaus DBL</span>{d.blacklists.spamhaus_dbl}</div>
+                </div>
+              )}
+              <Tags tags={d.tags ?? []} />
+            </div>
+          : <StatusRow ok={true} yes="No URLhaus records for this URL" no="" />
+      )}
+    </SectionCard>
   );
 }

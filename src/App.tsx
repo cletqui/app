@@ -8,13 +8,17 @@ import { CVESection } from "@/components/sections/CVESection";
 import { ASNSection } from "@/components/sections/ASNSection";
 import { HashSection } from "@/components/sections/HashSection";
 import { detect, TYPE_LABELS, type InputType } from "@/lib/detect";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle } from "lucide-react";
 
-type SearchState = {
-  query: string;
-  type: InputType;
-} | null;
+const EXAMPLES: { label: string; value: string }[] = [
+  { label: "Domain", value: "cloudflare.com" },
+  { label: "IPv4", value: "1.1.1.1" },
+  { label: "URL", value: "https://example.com" },
+  { label: "CVE", value: "CVE-2021-44228" },
+  { label: "ASN", value: "AS13335" },
+  { label: "SHA-256", value: "094fd325049b8a9cf6d3e5ef2a6d4cc6a567d7d49c35f8bb8dd9e3c6acf3d78d" },
+];
+
+type Search = { query: string; type: InputType } | null;
 
 function Results({ query, type }: { query: string; type: InputType }) {
   if (type === "ipv4" || type === "ipv6") return <IPSection ip={query} />;
@@ -24,58 +28,53 @@ function Results({ query, type }: { query: string; type: InputType }) {
   if (type === "asn") return <ASNSection asn={query} />;
   if (type === "sha256") return <HashSection hash={query} />;
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-border p-4 text-sm text-muted-foreground">
-      <AlertCircle className="h-4 w-4 shrink-0" />
-      <span>
-        Unrecognized input. Try a domain, IP, URL (with <code className="font-mono text-xs">https://</code>), CVE ID, ASN, or SHA-256 hash.
-      </span>
-    </div>
+    <p className="text-xs text-muted-foreground">
+      Unrecognized input — try a domain, IP, URL, CVE ID (CVE-YYYY-NNNN), ASN (AS12345), or SHA-256 hash.
+    </p>
   );
 }
 
 export default function App() {
   const [input, setInput] = useState("");
-  const [search, setSearch] = useState<SearchState>(null);
+  const [search, setSearch] = useState<Search>(null);
 
   function handleSubmit(value: string) {
-    const type = detect(value);
-    setSearch({ query: value, type });
+    setSearch({ query: value, type: detect(value) });
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       <main className="mx-auto max-w-5xl px-4 pb-16">
         {!search ? (
-          /* ── Landing ── */
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <h1 className="mb-2 font-mono text-2xl font-medium tracking-tight">OSINT Lookup</h1>
-            <p className="mb-8 max-w-sm text-sm text-muted-foreground">
-              Investigate domains, IPs, URLs, CVEs, ASNs, and malware hashes from a single interface.
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="mb-1 text-sm font-medium">OSINT Lookup</p>
+            <p className="mb-8 text-xs text-muted-foreground">
+              Domains · IPs · URLs · CVEs · ASNs · SHA-256 hashes
             </p>
-            <div className="w-full max-w-xl">
+            <div className="w-full max-w-lg">
               <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} />
             </div>
-            <div className="mt-6 flex flex-wrap justify-center gap-1.5">
-              {(["ipv4", "ipv6", "domain", "url", "cve", "asn", "sha256"] as InputType[]).map((t) => (
-                <Badge key={t} variant="outline" className="text-xs text-muted-foreground">
-                  {TYPE_LABELS[t]}
-                </Badge>
+            <div className="mt-5 flex flex-wrap justify-center gap-1.5">
+              {EXAMPLES.map((ex) => (
+                <button
+                  key={ex.label}
+                  onClick={() => handleSubmit(ex.value)}
+                  className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-ring hover:text-foreground transition-colors"
+                >
+                  {ex.label}
+                </button>
               ))}
             </div>
           </div>
         ) : (
-          /* ── Results ── */
-          <div className="pt-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
-              </div>
-            </div>
+          <div className="space-y-3 pt-3">
+            <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">{TYPE_LABELS[search.type]}</Badge>
-              <span className="font-mono text-sm">{search.query}</span>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {TYPE_LABELS[search.type]}
+              </span>
+              <span className="text-xs">{search.query}</span>
             </div>
             <Results query={search.query} type={search.type} />
           </div>
