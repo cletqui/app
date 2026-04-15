@@ -13,7 +13,7 @@ export function Footer() {
     <footer className="border-t border-border bg-background">
       <div className="mx-auto flex h-10 max-w-5xl items-center justify-center gap-4 px-4">
         <a
-          href="https://github.com/cletqui"
+          href="https://github.com/cletqui/app"
           target="_blank"
           rel="noopener noreferrer"
           className="text-muted-foreground transition-colors hover:text-foreground"
