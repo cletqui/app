@@ -40,7 +40,7 @@ export function SectionCard({
       ) : error ? (
         <div className="flex items-start gap-1.5 text-destructive">
           <AlertCircle className="mt-px h-3 w-3 shrink-0" />
-          <span className="text-xs">{error}</span>
+          <span className="text-xs">{error || "Request failed"}</span>
         </div>
       ) : (
         children

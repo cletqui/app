@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { SearchBar } from "@/components/SearchBar";
 import { IPSection } from "@/components/sections/IPSection";
 import { DomainSection } from "@/components/sections/DomainSection";
@@ -12,6 +13,7 @@ import { detect, TYPE_LABELS, type InputType } from "@/lib/detect";
 const EXAMPLES: { label: string; value: string }[] = [
   { label: "Domain", value: "cloudflare.com" },
   { label: "IPv4", value: "1.1.1.1" },
+  { label: "IPv6", value: "2606:4700:4700::1111" },
   { label: "URL", value: "https://example.com" },
   { label: "CVE", value: "CVE-2021-44228" },
   { label: "ASN", value: "AS13335" },
@@ -43,16 +45,12 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
-      <main className="mx-auto max-w-5xl px-4 pb-16">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-4">
         {!search ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="mb-1 text-sm font-medium">OSINT Lookup</p>
-            <p className="mb-8 text-xs text-muted-foreground">
-              Domains · IPs · URLs · CVEs · ASNs · SHA-256 hashes
-            </p>
-            <div className="w-full max-w-lg">
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="w-full max-w-md">
               <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} />
             </div>
             <div className="mt-5 flex flex-wrap justify-center gap-1.5">
@@ -68,7 +66,7 @@ export default function App() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3 pt-3">
+          <div className="space-y-3 pt-4">
             <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -80,6 +78,7 @@ export default function App() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
