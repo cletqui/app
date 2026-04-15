@@ -1,7 +1,7 @@
 import { useAsync } from "@/hooks/useAsync";
 import { SectionCard, Row, StatusRow, NoData, Tags } from "@/components/SectionCard";
-import { ipInfo, ipReverseDns, ipReputation, ipThreat } from "@/lib/api";
-import type { IpInfo, IpReverseDns, IpReputation, UrlhausHostResult } from "@/lib/api";
+import { ipInfo, ipReverseDns, ipShodan, ipWhois } from "@/lib/api";
+import type { IpInfo, IpReverseDns, ShodanResult, IpWhois } from "@/lib/api";
 
 function flag(cc: string) {
   return cc.toUpperCase().split("").map((c) =>
@@ -12,15 +12,15 @@ function flag(cc: string) {
 export function IPSection({ ip }: { ip: string }) {
   const info = useAsync(() => ipInfo(ip), [ip]);
   const rdns = useAsync(() => ipReverseDns(ip), [ip]);
-  const rep = useAsync(() => ipReputation(ip), [ip]);
-  const threat = useAsync(() => ipThreat(ip), [ip]);
+  const shodan = useAsync(() => ipShodan(ip), [ip]);
+  const whois = useAsync(() => ipWhois(ip), [ip]);
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       <GeoCard state={info} />
       <RdnsCard state={rdns} />
-      <ReputationCard state={rep} />
-      <ThreatCard state={threat} />
+      <ShodanCard state={shodan} />
+      <WhoisCard state={whois} />
     </div>
   );
 }
@@ -49,7 +49,7 @@ function GeoCard({ state }: { state: ReturnType<typeof useAsync<IpInfo>> }) {
 function RdnsCard({ state }: { state: ReturnType<typeof useAsync<IpReverseDns>> }) {
   const d = state.data;
   return (
-    <SectionCard title="Reverse DNS" source="reversedns.io" loading={state.loading} error={state.error} skeletonRows={2}>
+    <SectionCard title="Reverse DNS" source="Cloudflare DoH" loading={state.loading} error={state.error} skeletonRows={2}>
       {d && (
         d.reverse_dns?.length
           ? <ul className="space-y-0.5">{d.reverse_dns.map((h) => <li key={h} className="text-xs">{h}</li>)}</ul>
@@ -59,53 +59,68 @@ function RdnsCard({ state }: { state: ReturnType<typeof useAsync<IpReverseDns>> 
   );
 }
 
-function ReputationCard({ state }: { state: ReturnType<typeof useAsync<IpReputation>> }) {
+function ShodanCard({ state }: { state: ReturnType<typeof useAsync<ShodanResult | null>> }) {
   const d = state.data;
   return (
-    <SectionCard title="Reputation" source="Spamhaus" loading={state.loading} error={state.error} skeletonRows={2}>
-      {d && (
-        d.results?.length
-          ? <div className="space-y-1">
-              {d.results.map((r, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className="text-destructive">● {r.dataset}</span>
-                  <span className="text-muted-foreground">since {new Date(r.listed * 1000).toLocaleDateString()}</span>
+    <SectionCard title="Ports & Vulns" source="Shodan" loading={state.loading} error={state.error} skeletonRows={3}>
+      {state.data !== undefined && (
+        d
+          ? <div>
+              {d.ports.length > 0 && (
+                <div className="mb-1.5">
+                  <p className="mb-0.5 text-[10px] text-muted-foreground">Open ports</p>
+                  <p className="text-xs">{d.ports.join(", ")}</p>
                 </div>
-              ))}
+              )}
+              {d.hostnames.length > 0 && (
+                <div className="mb-1.5">
+                  <p className="mb-0.5 text-[10px] text-muted-foreground">Hostnames</p>
+                  {d.hostnames.slice(0, 4).map((h) => <p key={h} className="text-xs">{h}</p>)}
+                </div>
+              )}
+              {d.vulns.length > 0 && (
+                <div className="mb-1.5">
+                  <p className="mb-0.5 text-[10px] text-muted-foreground">CVEs</p>
+                  {d.vulns.slice(0, 5).map((v) => <p key={v} className="text-xs text-destructive">{v}</p>)}
+                  {d.vulns.length > 5 && <p className="text-xs text-muted-foreground">+{d.vulns.length - 5} more</p>}
+                </div>
+              )}
+              <Tags tags={d.tags} />
+              {d.ports.length === 0 && d.vulns.length === 0 && d.hostnames.length === 0 && (
+                <StatusRow ok={true} yes="No notable exposure" no="" />
+              )}
             </div>
-          : <StatusRow ok={true} yes="Not listed in any blocklist" no="" />
+          : <NoData message="No Shodan data for this IP" />
       )}
     </SectionCard>
   );
 }
 
-function ThreatCard({ state }: { state: ReturnType<typeof useAsync<UrlhausHostResult>> }) {
+function WhoisCard({ state }: { state: ReturnType<typeof useAsync<IpWhois>> }) {
   const d = state.data;
-  const found = d?.query_status === "ok";
+  // Key fields to highlight at the top
+  const priority = ["inetnum", "inet6num", "netrange", "cidr", "netname", "country", "org", "orgname", "descr", "owner"];
+  const sorted = d
+    ? [
+        ...priority.map((k) => d.records.find((r) => r.key.toLowerCase() === k)).filter(Boolean),
+        ...d.records.filter((r) => !priority.includes(r.key.toLowerCase())),
+      ] as { key: string; value: string }[]
+    : [];
+
   return (
-    <SectionCard title="Threat Intel" source="URLhaus" loading={state.loading} error={state.error} skeletonRows={2}>
+    <SectionCard title="WHOIS" source="RIPEstat" loading={state.loading} error={state.error} skeletonRows={5}>
       {d && (
-        found
-          ? <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-destructive text-xs">● Malicious</span>
-                <span className="text-xs text-muted-foreground">{d.urls_count} URL{(d.urls_count ?? 0) !== 1 ? "s" : ""}</span>
-              </div>
-              {d.blacklists && <Row label="Spamhaus DBL" value={d.blacklists.spamhaus_dbl} />}
-              {d.urls?.slice(0, 3).map((u) => (
-                <div key={u.id} className="rounded border border-border p-1.5 text-xs">
-                  <div className="mb-0.5 flex items-center gap-1.5">
-                    <span className={u.url_status === "online" ? "text-destructive" : "text-muted-foreground"}>
-                      {u.url_status}
-                    </span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground">{u.threat}</span>
-                  </div>
-                  <span className="break-all">{u.url}</span>
+        sorted.length
+          ? <div className="space-y-0.5">
+              {sorted.slice(0, 12).map((r, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs">
+                  <span className="w-20 shrink-0 text-muted-foreground">{r.key}</span>
+                  <span className="break-all">{r.value}</span>
                 </div>
               ))}
+              {sorted.length > 12 && <p className="text-xs text-muted-foreground">+{sorted.length - 12} more fields</p>}
             </div>
-          : <StatusRow ok={true} yes="No URLhaus records" no="" />
+          : <NoData message="No WHOIS data" />
       )}
     </SectionCard>
   );

@@ -3,10 +3,10 @@ const API = "https://api.cybai.re";
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API}${path}`);
   if (!res.ok) {
-    const text = await res.text().catch(() => `HTTP ${res.status}`);
-    const err = new Error(text || `HTTP ${res.status}`);
-    (err as Error & { status: number }).status = res.status;
-    throw err;
+    const text = await res.text().catch(() => "");
+    const clean = text.trim();
+    const message = clean && !clean.startsWith("<") ? clean : `HTTP ${res.status}`;
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -40,30 +40,23 @@ export interface IpReverseDns {
   reverse_dns: string[];
 }
 
-export interface IpReputation {
-  results: { dataset: string; ipaddress: string; asn: string; cc: string; listed: number }[];
+export interface ShodanResult {
+  ip: string;
+  ports: number[];
+  cpes: string[];
+  hostnames: string[];
+  tags: string[];
+  vulns: string[];
 }
 
 export const ipInfo = (ip: string) =>
   get<IpInfo>(`/cyber/ip/info/${encodeURIComponent(ip)}`);
 export const ipReverseDns = (ip: string) =>
   get<IpReverseDns>(`/cyber/ip/reverse-dns/${encodeURIComponent(ip)}`);
-export const ipReputation = (ip: string) =>
-  get<IpReputation>(`/cyber/ip/reputation/${encodeURIComponent(ip)}`);
-export const ipThreat = (ip: string) =>
-  get<UrlhausHostResult>(`/cyber/ip/threat/${encodeURIComponent(ip)}`);
+export const ipShodan = (ip: string) =>
+  get<ShodanResult | null>(`/cyber/ip/shodan/${encodeURIComponent(ip)}`);
 
 // ── Domain ─────────────────────────────────────────────────────────────────
-
-export interface WhoisResult {
-  ldhName: string;
-  handle?: string;
-  status: string[];
-  events: { eventAction: string; eventDate: string }[];
-  entities?: { roles: string[]; handle?: string }[];
-  nameservers?: { ldhName: string }[];
-  secureDNS?: { delegationSigned: boolean };
-}
 
 export interface DnsRecord {
   name: string;
@@ -91,15 +84,6 @@ export interface CertEntry {
   issuer_name: string;
 }
 
-export interface DomainReputation {
-  domain: string;
-  "last-seen": number;
-  tags: string[];
-  abused: boolean;
-  score: number;
-  dimensions: { human: number; identity: number; infra: number; malware: number; smtp: number };
-}
-
 export interface MailSecurity {
   domain: string;
   mx: { priority: number; exchange: string }[];
@@ -108,60 +92,44 @@ export interface MailSecurity {
   dkim: { selector: string; record: string | null; valid: boolean };
 }
 
-export interface UrlhausHostResult {
-  query_status: string;
-  urlhaus_reference?: string;
-  host?: string;
-  urls_count?: number;
-  blacklists?: { spamhaus_dbl: string; surbl: string };
-  urls?: { id: string; url: string; url_status: string; date_added: string; threat: string; reporter: string; tags: string[] | null }[];
-  firstseen?: string;
+export interface DomainWhois {
+  name: string;
+  registrar?: string;
+  registered?: string;
+  expires?: string;
+  updated?: string;
+  status: string[];
+  nameservers: string[];
 }
 
-export interface UrlhausUrlResult {
-  query_status: string;
-  urlhaus_reference?: string;
-  url?: string;
-  url_status?: string;
-  date_added?: string;
-  threat?: string;
-  blacklists?: { gsb: string; surbl: string; spamhaus_dbl: string };
-  tags?: string[] | null;
+export interface IpWhois {
+  resource: string;
+  records: { key: string; value: string }[];
 }
 
 export const domainWhois = (domain: string) =>
-  get<WhoisResult>(`/cyber/domain/whois/${encodeURIComponent(domain)}`);
+  get<DomainWhois>(`/cyber/domain/whois/${encodeURIComponent(domain)}`);
 export const domainNslookup = (domain: string) =>
   get<NslookupResult>(`/cyber/domain/nslookup/cloudflare/${encodeURIComponent(domain)}`);
 export const domainCerts = (domain: string) =>
   get<CertEntry[]>(`/cyber/domain/certs/${encodeURIComponent(domain)}?exclude=expired&deduplicate=Y`);
-export const domainReputation = (domain: string) =>
-  get<DomainReputation>(`/cyber/domain/reputation/${encodeURIComponent(domain)}`);
 export const domainMailSecurity = (domain: string) =>
   get<MailSecurity>(`/cyber/domain/mail-security/${encodeURIComponent(domain)}`);
-export const domainThreat = (domain: string) =>
-  get<UrlhausHostResult>(`/cyber/domain/threat/${encodeURIComponent(domain)}`);
-export const urlThreat = (url: string) =>
-  get<UrlhausUrlResult>(`/cyber/domain/url/threat?url=${encodeURIComponent(url)}`);
+export const ipWhois = (ip: string) =>
+  get<IpWhois>(`/cyber/ip/whois/${encodeURIComponent(ip)}`);
 
 // ── ASN ────────────────────────────────────────────────────────────────────
 
 export interface AsnInfo {
   asn: number;
-  name: string;
-  description_short: string;
-  description_full: string[];
-  country_code: string;
-  website: string | null;
-  email_contacts: string[];
-  abuse_contacts: string[];
-  rir_allocation: { rir_name: string; country_code: string | null; date_allocated: string | null; allocation_status: string };
-  date_updated: string;
+  holder: string;
+  announced: boolean;
+  type: string;
 }
 
 export interface AsnPrefixes {
-  ipv4_prefixes: { prefix: string; name: string; description: string; country_code: string }[];
-  ipv6_prefixes: { prefix: string; name: string; description: string; country_code: string }[];
+  ipv4_prefixes: { prefix: string }[];
+  ipv6_prefixes: { prefix: string }[];
 }
 
 export const asnInfo = (asn: string) =>
