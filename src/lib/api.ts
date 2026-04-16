@@ -49,12 +49,24 @@ export interface ShodanResult {
   vulns: string[];
 }
 
+export interface IpReputation {
+  appears: boolean;
+  frequency: number;
+  confidence: number | null;
+  lastseen: string | null;
+  torexit: boolean;
+  asn: number | null;
+  country: string | null;
+}
+
 export const ipInfo = (ip: string) =>
   get<IpInfo>(`/cyber/ip/info/${encodeURIComponent(ip)}`);
 export const ipReverseDns = (ip: string) =>
   get<IpReverseDns>(`/cyber/ip/reverse-dns/${encodeURIComponent(ip)}`);
 export const ipShodan = (ip: string) =>
   get<ShodanResult | null>(`/cyber/ip/shodan/${encodeURIComponent(ip)}`);
+export const ipReputation = (ip: string) =>
+  get<IpReputation>(`/cyber/ip/reputation/${encodeURIComponent(ip)}`);
 
 // ── Domain ─────────────────────────────────────────────────────────────────
 
