@@ -1,7 +1,7 @@
 import { useAsync } from "@/hooks/useAsync";
 import { SectionCard, Row, StatusRow, NoData, Tags } from "@/components/SectionCard";
-import { ipInfo, ipReverseDns, ipShodan, ipWhois } from "@/lib/api";
-import type { IpInfo, IpReverseDns, ShodanResult, IpWhois } from "@/lib/api";
+import { ipInfo, ipReverseDns, ipShodan, ipWhois, ipReputation } from "@/lib/api";
+import type { IpInfo, IpReverseDns, ShodanResult, IpWhois, IpReputation } from "@/lib/api";
 
 function flag(cc: string) {
   return cc.toUpperCase().split("").map((c) =>
@@ -14,12 +14,14 @@ export function IPSection({ ip }: { ip: string }) {
   const rdns = useAsync(() => ipReverseDns(ip), [ip]);
   const shodan = useAsync(() => ipShodan(ip), [ip]);
   const whois = useAsync(() => ipWhois(ip), [ip]);
+  const reputation = useAsync(() => ipReputation(ip), [ip]);
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       <GeoCard state={info} />
       <RdnsCard state={rdns} />
       <ShodanCard state={shodan} />
+      <ReputationCard state={reputation} />
       <WhoisCard state={whois} />
     </div>
   );
@@ -91,6 +93,27 @@ function ShodanCard({ state }: { state: ReturnType<typeof useAsync<ShodanResult 
               )}
             </div>
           : <NoData message="No Shodan data for this IP" />
+      )}
+    </SectionCard>
+  );
+}
+
+function ReputationCard({ state }: { state: ReturnType<typeof useAsync<IpReputation>> }) {
+  const d = state.data;
+  return (
+    <SectionCard title="Reputation" source="StopForumSpam" loading={state.loading} error={state.error} skeletonRows={3}>
+      {d && (
+        <div>
+          <StatusRow ok={!d.appears} yes="Clean" no="Listed as spam source" />
+          {d.appears && (
+            <>
+              <Row label="Reports" value={String(d.frequency)} />
+              {d.confidence !== null && <Row label="Confidence" value={`${d.confidence}%`} />}
+              {d.lastseen && <Row label="Last seen" value={d.lastseen} />}
+            </>
+          )}
+          <Tags tags={[d.torexit ? "tor-exit" : ""].filter(Boolean)} />
+        </div>
       )}
     </SectionCard>
   );
