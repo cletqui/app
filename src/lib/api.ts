@@ -65,6 +65,8 @@ export const ipReverseDns = (ip: string) =>
   get<IpReverseDns>(`/cyber/ip/reverse-dns/${encodeURIComponent(ip)}`);
 export const ipShodan = (ip: string) =>
   get<ShodanResult | null>(`/cyber/ip/shodan/${encodeURIComponent(ip)}`);
+export const myIp = () => get<{ ip: string }>("/cyber/ip/me");
+
 export const ipReputation = (ip: string) =>
   get<IpReputation>(`/cyber/ip/reputation/${encodeURIComponent(ip)}`);
 

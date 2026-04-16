@@ -1,12 +1,11 @@
 import { useAsync } from "@/hooks/useAsync";
 import { IPSection } from "@/components/sections/IPSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import { myIp } from "@/lib/api";
 
 async function fetchMyIp(): Promise<string> {
-  const res = await fetch("https://api.ipify.org?format=json");
-  if (!res.ok) throw new Error("Could not detect your IP");
-  const json = (await res.json()) as { ip: string };
-  return json.ip;
+  const { ip } = await myIp();
+  return ip;
 }
 
 export function MyIPSection() {
