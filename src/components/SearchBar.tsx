@@ -32,8 +32,8 @@ export function SearchBar({ value, onChange, onSubmit, compact = false }: Search
     <form onSubmit={handleSubmit} className="w-full">
       <div
         className={cn(
-          "relative flex items-center rounded border border-border bg-card transition-colors",
-          "focus-within:border-ring focus-within:ring-1 focus-within:ring-ring",
+          "relative flex items-center rounded border border-border bg-card transition-all duration-150",
+          "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20 focus-within:shadow-[0_0_12px_hsl(var(--ring)/0.08)]",
           compact ? "h-8" : "h-11"
         )}
       >

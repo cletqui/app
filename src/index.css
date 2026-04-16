@@ -24,6 +24,12 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --animate-fade-in: fade-in 0.18s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 :root {
@@ -83,4 +89,13 @@ body {
   font-size: 12px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle radial glow at the top in dark mode */
+.dark body {
+  background-image: radial-gradient(ellipse 90% 35% at 50% -5%, hsl(240 10% 14%), transparent);
+}
+
+.animate-fade-in {
+  animation: var(--animate-fade-in);
 }

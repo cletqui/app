@@ -191,3 +191,17 @@ export interface HashResult {
 
 export const hashInfo = (hash: string) =>
   get<HashResult>(`/cyber/hash/${encodeURIComponent(hash)}`);
+
+// ── User-Agent ──────────────────────────────────────────────────────────────
+
+export interface UaResult {
+  ua: string;
+  browser: { name?: string; version?: string; major?: string };
+  cpu: { architecture?: string };
+  device: { type?: string; model?: string; vendor?: string };
+  engine: { name?: string; version?: string };
+  os: { name?: string; version?: string };
+}
+
+export const uaParse = (ua: string) =>
+  get<UaResult>(`/cyber/ua?ua=${encodeURIComponent(ua)}`);

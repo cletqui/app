@@ -51,13 +51,3 @@ export const TYPE_LABELS: Record<InputType, string> = {
   sha256: "SHA-256",
   unknown: "Unknown",
 };
-
-export const TYPE_PLACEHOLDERS: Partial<Record<InputType, string>> = {
-  ipv4: "1.1.1.1",
-  ipv6: "2606:4700:4700::1111",
-  domain: "example.com",
-  url: "https://example.com/path",
-  cve: "CVE-2021-44228",
-  asn: "AS13335",
-  sha256: "abc123...64 hex chars",
-};

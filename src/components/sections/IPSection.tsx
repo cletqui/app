@@ -1,5 +1,5 @@
 import { useAsync } from "@/hooks/useAsync";
-import { SectionCard, Row, StatusRow, NoData, Tags } from "@/components/SectionCard";
+import { SectionCard, CardGrid, Row, SubLabel, StatusRow, NoData, Tags } from "@/components/SectionCard";
 import { ipInfo, ipReverseDns, ipShodan, ipWhois, ipReputation } from "@/lib/api";
 import type { IpInfo, IpReverseDns, ShodanResult, IpWhois, IpReputation } from "@/lib/api";
 
@@ -17,13 +17,13 @@ export function IPSection({ ip }: { ip: string }) {
   const reputation = useAsync(() => ipReputation(ip), [ip]);
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <CardGrid>
       <GeoCard state={info} />
       <RdnsCard state={rdns} />
       <ShodanCard state={shodan} />
       <ReputationCard state={reputation} />
       <WhoisCard state={whois} />
-    </div>
+    </CardGrid>
   );
 }
 
@@ -64,35 +64,34 @@ function RdnsCard({ state }: { state: ReturnType<typeof useAsync<IpReverseDns>> 
 function ShodanCard({ state }: { state: ReturnType<typeof useAsync<ShodanResult | null>> }) {
   const d = state.data;
   return (
-    <SectionCard title="Ports & Vulns" source="Shodan" loading={state.loading} error={state.error} skeletonRows={3}>
+    <SectionCard title="Ports & Vulns" source="Shodan" loading={state.loading} error={state.error} skeletonRows={3} expandable>
       {state.data !== undefined && (
-        d
-          ? <div>
-              {d.ports.length > 0 && (
-                <div className="mb-1.5">
-                  <p className="mb-0.5 text-[10px] text-muted-foreground">Open ports</p>
-                  <p className="text-xs">{d.ports.join(", ")}</p>
-                </div>
-              )}
-              {d.hostnames.length > 0 && (
-                <div className="mb-1.5">
-                  <p className="mb-0.5 text-[10px] text-muted-foreground">Hostnames</p>
-                  {d.hostnames.slice(0, 4).map((h) => <p key={h} className="text-xs">{h}</p>)}
-                </div>
-              )}
-              {d.vulns.length > 0 && (
-                <div className="mb-1.5">
-                  <p className="mb-0.5 text-[10px] text-muted-foreground">CVEs</p>
-                  {d.vulns.slice(0, 5).map((v) => <p key={v} className="text-xs text-destructive">{v}</p>)}
-                  {d.vulns.length > 5 && <p className="text-xs text-muted-foreground">+{d.vulns.length - 5} more</p>}
-                </div>
-              )}
-              <Tags tags={d.tags} />
-              {d.ports.length === 0 && d.vulns.length === 0 && d.hostnames.length === 0 && (
-                <StatusRow ok={true} yes="No notable exposure" no="" />
-              )}
-            </div>
-          : <NoData message="No Shodan data for this IP" />
+        d ? (
+          <div>
+            {d.ports.length > 0 && (
+              <div className="mb-1.5">
+                <SubLabel>Open ports</SubLabel>
+                <p className="text-xs">{d.ports.join(", ")}</p>
+              </div>
+            )}
+            {d.hostnames.length > 0 && (
+              <div className="mb-1.5">
+                <SubLabel>Hostnames</SubLabel>
+                {d.hostnames.map((h) => <p key={h} className="text-xs">{h}</p>)}
+              </div>
+            )}
+            {d.vulns.length > 0 && (
+              <div className="mb-1.5">
+                <SubLabel>CVEs</SubLabel>
+                {d.vulns.map((v) => <p key={v} className="text-xs text-destructive">{v}</p>)}
+              </div>
+            )}
+            <Tags tags={d.tags} />
+            {d.ports.length === 0 && d.vulns.length === 0 && d.hostnames.length === 0 && (
+              <StatusRow ok={true} yes="No notable exposure" no="" />
+            )}
+          </div>
+        ) : <NoData message="No Shodan data for this IP" />
       )}
     </SectionCard>
   );
@@ -121,7 +120,6 @@ function ReputationCard({ state }: { state: ReturnType<typeof useAsync<IpReputat
 
 function WhoisCard({ state }: { state: ReturnType<typeof useAsync<IpWhois>> }) {
   const d = state.data;
-  // Key fields to highlight at the top
   const priority = ["inetnum", "inet6num", "netrange", "cidr", "netname", "country", "org", "orgname", "descr", "owner"];
   const sorted = d
     ? [
@@ -131,17 +129,16 @@ function WhoisCard({ state }: { state: ReturnType<typeof useAsync<IpWhois>> }) {
     : [];
 
   return (
-    <SectionCard title="WHOIS" source="RIPEstat" loading={state.loading} error={state.error} skeletonRows={5}>
+    <SectionCard title="WHOIS" source="RIPEstat" loading={state.loading} error={state.error} skeletonRows={5} expandable>
       {d && (
         sorted.length
           ? <div className="space-y-0.5">
-              {sorted.slice(0, 12).map((r, i) => (
+              {sorted.map((r, i) => (
                 <div key={i} className="flex items-start gap-2 text-xs">
                   <span className="w-20 shrink-0 text-muted-foreground">{r.key}</span>
                   <span className="break-all">{r.value}</span>
                 </div>
               ))}
-              {sorted.length > 12 && <p className="text-xs text-muted-foreground">+{sorted.length - 12} more fields</p>}
             </div>
           : <NoData message="No WHOIS data" />
       )}
