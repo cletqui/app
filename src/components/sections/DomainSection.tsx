@@ -1,8 +1,6 @@
 import { useAsync } from "@/hooks/useAsync";
-import { SectionCard, Row, NoData, Tags } from "@/components/SectionCard";
-import {
-  domainWhois, domainNslookup, domainCerts, domainMailSecurity,
-} from "@/lib/api";
+import { SectionCard, CardGrid, Row, SubLabel, NoData, Tags } from "@/components/SectionCard";
+import { domainWhois, domainNslookup, domainCerts, domainMailSecurity } from "@/lib/api";
 import type { DomainWhois, NslookupResult, CertEntry, MailSecurity } from "@/lib/api";
 
 export function DomainSection({ domain }: { domain: string }) {
@@ -12,19 +10,19 @@ export function DomainSection({ domain }: { domain: string }) {
   const mail = useAsync(() => domainMailSecurity(domain), [domain]);
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+    <CardGrid>
       <WhoisCard state={whois} />
       <DnsCard state={dns} />
       <CertsCard state={certs} />
       <MailCard state={mail} />
-    </div>
+    </CardGrid>
   );
 }
 
 function WhoisCard({ state }: { state: ReturnType<typeof useAsync<DomainWhois>> }) {
   const d = state.data;
   return (
-    <SectionCard title="WHOIS" source="IANA RDAP" loading={state.loading} error={state.error}>
+    <SectionCard title="WHOIS" source="IANA RDAP" loading={state.loading} error={state.error} expandable>
       {d && (
         <div>
           {d.registrar && <Row label="Registrar" value={d.registrar} />}
@@ -33,13 +31,11 @@ function WhoisCard({ state }: { state: ReturnType<typeof useAsync<DomainWhois>> 
           {d.updated && <Row label="Updated" value={new Date(d.updated).toLocaleDateString()} />}
           {d.nameservers.length > 0 && (
             <div className="mt-1.5">
-              <p className="mb-0.5 text-[10px] text-muted-foreground">Nameservers</p>
-              {d.nameservers.slice(0, 4).map((ns) => (
-                <p key={ns} className="text-xs">{ns}</p>
-              ))}
+              <SubLabel>Nameservers</SubLabel>
+              {d.nameservers.map((ns) => <p key={ns} className="text-xs">{ns}</p>)}
             </div>
           )}
-          <Tags tags={d.status.slice(0, 4)} />
+          <Tags tags={d.status} />
         </div>
       )}
     </SectionCard>
@@ -60,10 +56,10 @@ function DnsCard({ state }: { state: ReturnType<typeof useAsync<NslookupResult>>
   ];
 
   return (
-    <SectionCard title="DNS Records" source="Cloudflare DoH" loading={state.loading} error={state.error} skeletonRows={5}>
+    <SectionCard title="DNS Records" source="Cloudflare DoH" loading={state.loading} error={state.error} skeletonRows={5} expandable>
       {records.length ? (
         <div className="space-y-1">
-          {records.slice(0, 12).map((r, i) => (
+          {records.map((r, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
               <span className="w-10 shrink-0 text-muted-foreground">{r.type}</span>
               <span className="break-all">{r.data}</span>
@@ -78,10 +74,10 @@ function DnsCard({ state }: { state: ReturnType<typeof useAsync<NslookupResult>>
 function CertsCard({ state }: { state: ReturnType<typeof useAsync<CertEntry[]>> }) {
   const d = state.data;
   return (
-    <SectionCard title="Certificates" source="crt.sh" loading={state.loading} error={state.error} skeletonRows={4}>
+    <SectionCard title="Certificates" source="crt.sh" loading={state.loading} error={state.error} skeletonRows={4} expandable>
       {d && (d.length ? (
         <div className="space-y-1.5">
-          {d.slice(0, 6).map((c) => (
+          {d.map((c) => (
             <div key={c.id} className="rounded border border-border p-1.5 text-xs">
               <div className="mb-0.5 font-medium">{c.common_name}</div>
               <div className="text-muted-foreground">{c.issuer_name?.split("O=")[1]?.split(",")[0] ?? c.issuer_name}</div>
@@ -96,14 +92,15 @@ function CertsCard({ state }: { state: ReturnType<typeof useAsync<CertEntry[]>> 
   );
 }
 
+const spfColor = (p?: string | null) =>
+  p === "pass" ? "text-success" : p === "softfail" ? "text-warning" : p === "fail" ? "text-destructive" : "text-muted-foreground";
+const dmarcColor = (p?: string | null) =>
+  p === "reject" ? "text-success" : p === "quarantine" ? "text-warning" : "text-destructive";
+
 function MailCard({ state }: { state: ReturnType<typeof useAsync<MailSecurity>> }) {
   const d = state.data;
-  const spfColor = (p?: string | null) =>
-    p === "pass" ? "text-success" : p === "softfail" ? "text-warning" : p === "fail" ? "text-destructive" : "text-muted-foreground";
-  const dmarcColor = (p?: string | null) =>
-    p === "reject" ? "text-success" : p === "quarantine" ? "text-warning" : "text-destructive";
   return (
-    <SectionCard title="Mail Security" source="DoH" loading={state.loading} error={state.error} skeletonRows={4}>
+    <SectionCard title="Mail Security" source="DoH" loading={state.loading} error={state.error} skeletonRows={4} expandable>
       {d && (
         <div>
           <div className="flex items-center gap-2 py-px text-xs">
@@ -116,7 +113,7 @@ function MailCard({ state }: { state: ReturnType<typeof useAsync<MailSecurity>> 
               ● {d.dmarc.valid ? `p=${d.dmarc.policy}` : "none"}
             </span>
             {d.dmarc.pct !== null && d.dmarc.pct < 100 && (
-              <span className="text-warning text-[10px]">{d.dmarc.pct}%</span>
+              <span className="text-[10px] text-warning">{d.dmarc.pct}%</span>
             )}
           </div>
           <div className="flex items-center gap-2 py-px text-xs">
@@ -127,8 +124,8 @@ function MailCard({ state }: { state: ReturnType<typeof useAsync<MailSecurity>> 
           </div>
           {d.mx?.length > 0 && (
             <div className="mt-1.5">
-              <p className="mb-0.5 text-[10px] text-muted-foreground">MX Records</p>
-              {d.mx.slice(0, 3).map((mx) => (
+              <SubLabel>MX Records</SubLabel>
+              {d.mx.map((mx) => (
                 <div key={mx.exchange} className="text-xs">{mx.priority} {mx.exchange}</div>
               ))}
             </div>

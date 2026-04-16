@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SearchBar } from "@/components/SearchBar";
@@ -8,7 +8,28 @@ import { URLSection } from "@/components/sections/URLSection";
 import { CVESection } from "@/components/sections/CVESection";
 import { ASNSection } from "@/components/sections/ASNSection";
 import { HashSection } from "@/components/sections/HashSection";
+import { MailSection } from "@/components/sections/MailSection";
+import { UserAgentSection } from "@/components/sections/UserAgentSection";
+import { MyIPSection } from "@/components/sections/MyIPSection";
 import { detect, TYPE_LABELS, type InputType } from "@/lib/detect";
+import { navigate } from "@/lib/router";
+import { TABS } from "@/components/Header";
+import type { Tab } from "@/components/Header";
+
+// ── Routing ────────────────────────────────────────────────────────────────
+
+function parseLocation(): { tab: Tab; query: string } {
+  const path = window.location.pathname;
+  const q = new URLSearchParams(window.location.search).get("q") ?? "";
+  const tab: Tab =
+    path === "/mail" ? "mail" :
+    path === "/ua" ? "ua" :
+    path === "/myip" ? "myip" :
+    "search";
+  return { tab, query: q };
+}
+
+// ── Lookup tab ─────────────────────────────────────────────────────────────
 
 const EXAMPLES: { label: string; value: string }[] = [
   { label: "Domain", value: "cloudflare.com" },
@@ -31,50 +52,94 @@ function Results({ query, type }: { query: string; type: InputType }) {
   if (type === "sha256") return <HashSection hash={query} />;
   return (
     <p className="text-xs text-muted-foreground">
-      Unrecognized input — try a domain, IP, URL, CVE ID (CVE-YYYY-NNNN), ASN (AS12345), or SHA-256 hash.
+      Unrecognized input — try a domain, IP, URL, CVE ID, ASN, or SHA-256 hash.
     </p>
   );
 }
 
-export default function App() {
-  const [input, setInput] = useState("");
-  const [search, setSearch] = useState<Search>(null);
+function LookupTab({ initialQuery }: { initialQuery: string }) {
+  const [input, setInput] = useState(initialQuery);
+  const [search, setSearch] = useState<Search>(
+    initialQuery ? { query: initialQuery, type: detect(initialQuery) } : null
+  );
+
+  useEffect(() => {
+    if (initialQuery) {
+      setInput(initialQuery);
+      setSearch({ query: initialQuery, type: detect(initialQuery) });
+    }
+  }, [initialQuery]);
 
   function handleSubmit(value: string) {
     setSearch({ query: value, type: detect(value) });
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-4">
-        {!search ? (
-          <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="w-full max-w-md">
-              <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} />
-            </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-1.5">
-              {EXAMPLES.map((ex) => (
-                <button
-                  key={ex.label}
-                  onClick={() => handleSubmit(ex.value)}
-                  className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-ring hover:text-foreground transition-colors"
-                >
-                  {ex.label}
-                </button>
-              ))}
-            </div>
+    <>
+      {!search ? (
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="mb-6 text-center">
+            <h1 className="mb-1.5 bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-sm font-semibold tracking-tight text-transparent">
+              Inspect anything.
+            </h1>
+            <p className="text-xs text-muted-foreground">IP · domain · URL · CVE · ASN · hash</p>
           </div>
+          <div className="w-full max-w-md">
+            <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} />
+          </div>
+          <div className="mt-5 flex flex-wrap justify-center gap-1.5">
+            {EXAMPLES.map((ex) => (
+              <button
+                key={ex.label}
+                onClick={() => handleSubmit(ex.value)}
+                className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground"
+              >
+                {ex.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="animate-fade-in space-y-3 pt-4">
+          <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {TYPE_LABELS[search.type]}
+            </span>
+            <span className="text-xs">{search.query}</span>
+          </div>
+          <Results query={search.query} type={search.type} />
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const [{ tab, query }, setRoute] = useState(parseLocation);
+
+  useEffect(() => {
+    function onPop() { setRoute(parseLocation()); }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header activeTab={tab} />
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-4">
+        {tab === "search" ? (
+          <LookupTab initialQuery={query} />
         ) : (
-          <div className="space-y-3 pt-4">
-            <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                {TYPE_LABELS[search.type]}
-              </span>
-              <span className="text-xs">{search.query}</span>
-            </div>
-            <Results query={search.query} type={search.type} />
+          <div className="animate-fade-in space-y-3 pt-4">
+            <h2 className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {TABS.find((t) => t.id === tab)?.label}
+            </h2>
+            {tab === "mail" && <MailSection />}
+            {tab === "ua" && <UserAgentSection />}
+            {tab === "myip" && <MyIPSection />}
           </div>
         )}
       </main>
