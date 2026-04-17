@@ -1,4 +1,4 @@
-const API = "https://api.cybai.re";
+const API = import.meta.env.VITE_API_URL ?? "https://api.cybai.re";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API}${path}`);
@@ -193,6 +193,17 @@ export interface HashResult {
 
 export const hashInfo = (hash: string) =>
   get<HashResult>(`/cyber/hash/${encodeURIComponent(hash)}`);
+
+// ── URL ────────────────────────────────────────────────────────────────────
+
+export interface RedirectHop {
+  url: string;
+  status: number;
+  location: string | null;
+}
+
+export const urlRedirects = (url: string) =>
+  get<{ hops: RedirectHop[] }>(`/cyber/url/redirects?url=${encodeURIComponent(url)}`);
 
 // ── User-Agent ──────────────────────────────────────────────────────────────
 

@@ -82,29 +82,28 @@ function RoutingCard({ mail }: { mail: ParsedMail }) {
   if (!mail.received.length) return null;
   return (
     <SectionCard title="Routing" className="sm:col-span-2" expandable>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="text-left">
-              <th className="pb-1 pr-3 font-normal text-[10px] text-muted-foreground">Hop</th>
-              <th className="pb-1 pr-3 font-normal text-[10px] text-muted-foreground">Delay</th>
-              <th className="pb-1 pr-3 font-normal text-[10px] text-muted-foreground">From</th>
-              <th className="pb-1 pr-3 font-normal text-[10px] text-muted-foreground">By</th>
-              <th className="pb-1 font-normal text-[10px] text-muted-foreground">Protocol</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mail.received.map((r) => (
-              <tr key={r.hop} className="border-t border-border/50">
-                <td className="py-0.5 pr-3 text-muted-foreground">{r.hop}</td>
-                <td className="py-0.5 pr-3">{r.delay}</td>
-                <td className="py-0.5 pr-3 break-all">{r.from ?? "—"}</td>
-                <td className="py-0.5 pr-3 break-all">{r.by ?? "—"}</td>
-                <td className="py-0.5">{r.with ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-2">
+        {mail.received.map((r) => (
+          <div key={r.hop} className="rounded border border-border/50 p-2 text-xs">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="whitespace-nowrap font-medium">Hop {r.hop}</span>
+              {r.delay && <span className="text-muted-foreground">{r.delay}</span>}
+              {r.with && <span className="ml-auto text-[10px] text-muted-foreground">{r.with}</span>}
+            </div>
+            {r.from && (
+              <div className="flex items-baseline gap-2">
+                <span className="w-8 shrink-0 text-[10px] text-muted-foreground">From</span>
+                <span className="break-all">{r.from}</span>
+              </div>
+            )}
+            {r.by && (
+              <div className="flex items-baseline gap-2">
+                <span className="w-8 shrink-0 text-[10px] text-muted-foreground">By</span>
+                <span className="break-all">{r.by}</span>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </SectionCard>
   );

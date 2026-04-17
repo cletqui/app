@@ -1,23 +1,74 @@
 import { useAsync } from "@/hooks/useAsync";
-import { SectionCard, CardGrid, Row, SubLabel, NoData, Tags } from "@/components/SectionCard";
+import { SectionCard, CardGrid, Row, SubLabel, NoData, Tags, RiskBadge, type RiskLevel } from "@/components/SectionCard";
 import { domainWhois, domainNslookup, domainCerts, domainMailSecurity } from "@/lib/api";
 import type { DomainWhois, NslookupResult, CertEntry, MailSecurity } from "@/lib/api";
+
+// ── Risk ───────────────────────────────────────────────────────────────────
+
+function computeRisk(mail: MailSecurity | null | undefined): RiskLevel | null {
+  if (!mail) return null;
+  if (!mail.spf.valid && !mail.dmarc.valid) return "malicious";
+  if (!mail.dmarc.valid || mail.dmarc.policy === "none" || !mail.dkim.valid || !mail.spf.valid) return "warning";
+  return "clean";
+}
+
+// ── DNS propagation ────────────────────────────────────────────────────────
+
+const DOH_RESOLVERS = [
+  { name: "Cloudflare", url: "https://cloudflare-dns.com/dns-query" },
+  { name: "Google", url: "https://dns.google/resolve" },
+  { name: "Quad9", url: "https://dns.quad9.net/dns-query" },
+];
+
+interface PropagationRow {
+  resolver: string;
+  records: string[];
+}
+
+async function checkPropagation(domain: string): Promise<PropagationRow[]> {
+  return Promise.all(
+    DOH_RESOLVERS.map(async (r) => {
+      try {
+        const res = await fetch(
+          `${r.url}?name=${encodeURIComponent(domain)}&type=A`,
+          { headers: { Accept: "application/dns-json" } }
+        );
+        const data = await res.json() as { Answer?: { type: number; data: string }[] };
+        const records = data.Answer?.filter((a) => a.type === 1).map((a) => a.data) ?? [];
+        return { resolver: r.name, records };
+      } catch {
+        return { resolver: r.name, records: [] };
+      }
+    })
+  );
+}
+
+// ── Section ────────────────────────────────────────────────────────────────
 
 export function DomainSection({ domain }: { domain: string }) {
   const whois = useAsync(() => domainWhois(domain), [domain]);
   const dns = useAsync(() => domainNslookup(domain), [domain]);
   const certs = useAsync(() => domainCerts(domain), [domain]);
   const mail = useAsync(() => domainMailSecurity(domain), [domain]);
+  const propagation = useAsync(() => checkPropagation(domain), [domain]);
+
+  const risk = computeRisk(mail.data);
 
   return (
-    <CardGrid>
-      <WhoisCard state={whois} />
-      <DnsCard state={dns} />
-      <CertsCard state={certs} />
-      <MailCard state={mail} />
-    </CardGrid>
+    <div className="space-y-2">
+      {risk && <RiskBadge level={risk} />}
+      <CardGrid>
+        <WhoisCard state={whois} />
+        <DnsCard state={dns} />
+        <CertsCard state={certs} />
+        <MailCard state={mail} />
+        <PropagationCard state={propagation} domain={domain} />
+      </CardGrid>
+    </div>
   );
 }
+
+// ── Sub-cards ──────────────────────────────────────────────────────────────
 
 function WhoisCard({ state }: { state: ReturnType<typeof useAsync<DomainWhois>> }) {
   const d = state.data;
@@ -130,6 +181,41 @@ function MailCard({ state }: { state: ReturnType<typeof useAsync<MailSecurity>> 
               ))}
             </div>
           )}
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function PropagationCard({ state, domain }: { state: ReturnType<typeof useAsync<PropagationRow[]>>; domain: string }) {
+  const d = state.data;
+
+  const allRecords = d ? d.flatMap((r) => r.records) : [];
+  const uniqueRecords = [...new Set(allRecords)];
+  const propagated = d && uniqueRecords.length <= 1 && d.every((r) => r.records.length > 0);
+  const diverged = d && uniqueRecords.length > 1;
+
+  return (
+    <SectionCard title="DNS Propagation" source="Cloudflare · Google · Quad9" loading={state.loading} error={state.error} skeletonRows={3}>
+      {d && (
+        <div className="space-y-1.5">
+          <div className="text-xs">
+            {propagated
+              ? <span className="text-success">● Propagated ({uniqueRecords[0] ?? "NXDOMAIN"})</span>
+              : diverged
+              ? <span className="text-warning">● Diverged — resolvers disagree</span>
+              : <span className="text-muted-foreground">● No A records found</span>}
+          </div>
+          <div className="space-y-0.5">
+            {d.map((r) => (
+              <div key={r.resolver} className="flex items-start gap-2 text-xs">
+                <span className="w-20 shrink-0 text-muted-foreground">{r.resolver}</span>
+                <span className={r.records.length ? "break-all" : "text-muted-foreground"}>
+                  {r.records.length ? r.records.join(", ") : "no result"}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </SectionCard>
