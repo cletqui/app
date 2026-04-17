@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 
 export type Tab = "search" | "mail" | "ua" | "myip";
 
-export const TABS: { id: Tab; label: string; path: string; primary?: boolean }[] = [
+export const TABS: { id: Tab; label: string; shortLabel?: string; path: string; primary?: boolean }[] = [
   { id: "search", label: "Lookup", path: "/", primary: true },
   { id: "mail", label: "Mail", path: "/mail" },
-  { id: "ua", label: "User-Agent", path: "/ua" },
+  { id: "ua", label: "User-Agent", shortLabel: "UA", path: "/ua" },
   { id: "myip", label: "My IP", path: "/myip" },
 ];
 
@@ -39,7 +39,12 @@ export function Header({ activeTab }: { activeTab: Tab }) {
                       : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {tab.label}
+                {tab.shortLabel ? (
+                  <>
+                    <span className="sm:hidden">{tab.shortLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </>
+                ) : tab.label}
               </a>
             ))}
           </nav>

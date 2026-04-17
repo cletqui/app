@@ -1,5 +1,5 @@
 import { useAsync } from "@/hooks/useAsync";
-import { SectionCard, CardGrid, Row, SubLabel, StatusRow, NoData, Tags } from "@/components/SectionCard";
+import { SectionCard, CardGrid, Row, SubLabel, StatusRow, NoData, Tags, RiskBadge, type RiskLevel } from "@/components/SectionCard";
 import { ipInfo, ipReverseDns, ipShodan, ipWhois, ipReputation } from "@/lib/api";
 import type { IpInfo, IpReverseDns, ShodanResult, IpWhois, IpReputation } from "@/lib/api";
 
@@ -9,6 +9,16 @@ function flag(cc: string) {
   ).join("");
 }
 
+function computeRisk(rep: IpReputation | null | undefined, shodan: ShodanResult | null | undefined): RiskLevel | null {
+  if (rep === undefined && shodan === undefined) return null;
+  if (
+    (rep?.appears && (rep.confidence ?? 0) >= 50) ||
+    (shodan?.vulns?.length ?? 0) > 0
+  ) return "malicious";
+  if (rep?.appears || rep?.torexit || (shodan?.ports?.length ?? 0) > 10) return "warning";
+  return "clean";
+}
+
 export function IPSection({ ip }: { ip: string }) {
   const info = useAsync(() => ipInfo(ip), [ip]);
   const rdns = useAsync(() => ipReverseDns(ip), [ip]);
@@ -16,14 +26,19 @@ export function IPSection({ ip }: { ip: string }) {
   const whois = useAsync(() => ipWhois(ip), [ip]);
   const reputation = useAsync(() => ipReputation(ip), [ip]);
 
+  const risk = computeRisk(reputation.data, shodan.data);
+
   return (
-    <CardGrid>
-      <GeoCard state={info} />
-      <RdnsCard state={rdns} />
-      <ShodanCard state={shodan} />
-      <ReputationCard state={reputation} />
-      <WhoisCard state={whois} />
-    </CardGrid>
+    <div className="space-y-2">
+      {risk && <RiskBadge level={risk} />}
+      <CardGrid>
+        <GeoCard state={info} />
+        <RdnsCard state={rdns} />
+        <ShodanCard state={shodan} />
+        <ReputationCard state={reputation} />
+        <WhoisCard state={whois} />
+      </CardGrid>
+    </div>
   );
 }
 

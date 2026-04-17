@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { detect, TYPE_LABELS, type InputType } from "@/lib/detect";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,28 @@ export function SearchBar({ value, onChange, onSubmit, compact = false }: Search
   const type = detect(value);
   const hasValue = value.trim().length > 0;
   const detected = hasValue && type !== "unknown";
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        return;
+      }
+      if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA" &&
+        !(document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,14 +65,14 @@ export function SearchBar({ value, onChange, onSubmit, compact = false }: Search
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="domain · IP · URL · CVE · ASN · SHA-256"
+          placeholder="domain · IP · URL · CVE · ASN · hash · JWT · CIDR"
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
           className={cn(
             "w-full bg-transparent text-xs outline-none placeholder:text-muted-foreground",
-            compact ? "px-8" : "px-8",
+            "px-8",
             hasValue ? "pr-28" : ""
           )}
         />
@@ -58,7 +80,7 @@ export function SearchBar({ value, onChange, onSubmit, compact = false }: Search
           <div className="absolute right-1.5 flex items-center gap-1">
             {detected && (
               <span className="hidden text-[10px] text-muted-foreground sm:block">
-                {TYPE_LABELS[type]}
+                {TYPE_LABELS[type as InputType]}
               </span>
             )}
             <button
