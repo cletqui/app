@@ -1,37 +1,43 @@
-# cybai.re
+# app.cybai.re
 
 A Swiss-knife cyber tool at [`app.cybai.re`](https://app.cybai.re).
 
-Four tabs, all client-side, all backed by [`api.cybai.re`](https://api.cybai.re) (open CORS, no auth, no keys).
+All client-side, all backed by [`api.cybai.re`](https://api.cybai.re) (open CORS, no auth, no keys).
 
-## Tabs
+## Lookup
 
-### Lookup
-Paste any of the following — the app auto-detects the type and fires all relevant lookups in parallel:
+Paste anything — the app auto-detects the type and fires all relevant lookups in parallel:
 
 | Input | Example | Sources |
 |-------|---------|---------|
-| Domain | `example.com` | WHOIS, DNS, certificates, mail security (SPF/DMARC/DKIM) |
-| IPv4 / IPv6 | `1.1.1.1` | Geolocation, reverse DNS, Shodan InternetDB, WHOIS, reputation |
-| URL | `https://example.com/path` | Extracts hostname → domain lookups |
+| Domain | `example.com` | WHOIS, DNS, certificates, mail security (SPF/DMARC/DKIM), DNS propagation |
+| IPv4 / IPv6 | `1.1.1.1` | Geolocation, reverse DNS, Shodan InternetDB, WHOIS, reputation (StopForumSpam) |
+| URL | `https://example.com/path` | Redirect chain + domain lookups |
 | CVE | `CVE-2021-44228` | MITRE record, CVSS score, references |
 | ASN | `AS13335` | BGPView info, IPv4/IPv6 prefix list |
-| SHA-256 | `abc123…` | MalwareBazaar sample info |
+| SHA-256 / SHA-1 / MD5 | `abc123…` | MalwareBazaar sample info |
+| JWT | `eyJhbGci…` | Offline decoder — header, claims, expiry countdown |
+| CIDR | `192.168.0.0/24` | Offline subnet calculator — network, broadcast, host range |
 
-### Mail
-Analyze a raw email (`.eml` upload or paste). Extracts routing hops, participants, links, attachments, and full headers. Clickable IPs and domains open in the Lookup tab.
+Risk indicators (Clean / Suspicious / Malicious) are shown at the top of IP and domain results based on aggregated signals.
 
-### User-Agent
-Paste any user-agent string (or use your own) to parse browser, OS, device, and engine details.
+## Other tabs
 
-### My IP
-Detects your public IP and runs all IP lookups automatically.
+- **Mail** — analyze a raw email (`.eml` upload or paste). Routing hops, participants, links, attachments, full headers. Clickable IPs and domains open in the Lookup tab. Fully offline via postal-mime.
+- **User-Agent** — parse any UA string (or your own) into browser, OS, device, and engine.
+- **My IP** — detects your public IP via `api.cybai.re/cyber/ip/me` and runs all IP lookups.
+
+## UX
+
+- **Search history** — recent lookups persisted in localStorage, shown as dismissible chips on the landing page.
+- **Copy buttons** — hover any data row to copy its value.
+- **Cmd+K / `/`** — focus the search bar from anywhere on the Lookup tab.
 
 ## Stack
 
 - **Vite + React 19 + TypeScript**
 - **Tailwind v4** via `@tailwindcss/vite`
-- **Cloudflare Worker** (`[assets]` binding, not Pages)
+- **Cloudflare Pages** — SPA routing via `public/_redirects`
 - **postal-mime** for offline email parsing
 
 ## Running locally
@@ -41,7 +47,7 @@ bun install
 bun run dev        # localhost:5173
 bun run build      # → dist/
 bun run typecheck  # tsc --noEmit
-bun run deploy     # build + wrangler deploy
+bun run deploy     # build + wrangler pages deploy dist
 ```
 
 ## License
