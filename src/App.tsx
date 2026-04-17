@@ -20,6 +20,37 @@ import { getHistory, pushHistory, removeHistory, clearHistory, type HistoryEntry
 import { TABS } from "@/components/Header";
 import type { Tab } from "@/components/Header";
 
+// ── Rotating hero word ────────────────────────────────────────────────────
+
+const HERO_WORDS = ["domains", "IP addresses", "CVEs", "hashes", "emails", "JWTs", "ASNs", "CIDRs"];
+
+function RotatingWord() {
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => { setIdx((i) => (i + 1) % HERO_WORDS.length); setVisible(true); }, 320);
+    }, 2400);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <span
+      className="text-foreground/70"
+      style={{
+        display: "inline-block",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(-5px)",
+        transition: "opacity 0.32s ease, transform 0.32s ease",
+      }}
+    >
+      {HERO_WORDS[idx]}
+    </span>
+  );
+}
+
 // ── Routing ────────────────────────────────────────────────────────────────
 
 function parseLocation(): { tab: Tab; query: string } {
@@ -103,10 +134,12 @@ function LookupTab({ initialQuery }: { initialQuery: string }) {
       {!search ? (
         <div className="flex flex-1 flex-col items-center justify-center">
           <div className="mb-6 text-center">
-            <h1 className="mb-1.5 bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-sm font-semibold tracking-tight text-transparent">
+            <h1 className="mb-2 bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-sm font-semibold tracking-tight text-transparent">
               Inspect anything.
             </h1>
-            <p className="text-xs text-muted-foreground">IP · domain · URL · CVE · ASN · hash · JWT · CIDR</p>
+            <p className="text-xs text-muted-foreground">
+              Lookup <RotatingWord />.
+            </p>
           </div>
           <div className="w-full max-w-md">
             <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} />
