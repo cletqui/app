@@ -162,11 +162,11 @@ function LookupTab({ initialQuery }: { initialQuery: string }) {
       ) : (
         <div className="animate-fade-in space-y-3 pt-4">
           <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} compact />
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 text-[10px] uppercase tracking-widest text-muted-foreground">
               {TYPE_LABELS[search.type]}
             </span>
-            <span className="text-xs">{search.query}</span>
+            <span className="truncate text-xs">{search.query}</span>
           </div>
           <Results query={search.query} type={search.type} />
         </div>
